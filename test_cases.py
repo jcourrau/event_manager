@@ -149,5 +149,5 @@ for tittle, new_event_data in test_cases.items():
 
 # Export data
 print(test_data_df.head(5))
-test_data_df.to_excel("test_cases.xlsx")
+test_data_df.to_csv("test_cases.csv")
 
