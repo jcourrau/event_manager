@@ -1,3 +1,4 @@
+from numpy.ma.core import concatenate
 from event_recurrance import *
 from sample_event_list import existing_events
 import pandas as pd
@@ -129,8 +130,11 @@ test_cases = {
 
 }
 
+# Generate the test data file for analysis.
 n = 1
-test_data_df = pd.DataFrame()
+test_cases_df = pd.DataFrame()
+test_tittles_dic = {}
+
 
 for tittle, new_event_data in test_cases.items():
 
@@ -141,13 +145,18 @@ for tittle, new_event_data in test_cases.items():
 
     # Add test data to dataframe
     temp_df = pd.DataFrame(list(scenario.items()), columns=["Date", "Value"])
-    temp_df["Test Case"] = tittle
     temp_df["Test Number"] = n
-    test_data_df = pd.concat([test_data_df, temp_df], ignore_index=True)
+    test_cases_df = pd.concat([test_cases_df, temp_df], ignore_index=True)
+
+    # Test tittle data
+    test_tittles_dic[tittle] = n
 
     n += 1
 
-# Export data
-print(test_data_df.head(5))
-test_data_df.to_csv("test_cases.csv")
+test_tittles_df = pd.DataFrame(list(data.items()), columns=['Test case', 'Test Number'])
 
+# Export data
+print(test_cases_df.head(5))
+print(test_tittles_dic)
+#test_cases_df.to_csv(f"test_cases {datetime.now().strftime("%m%d%Y-%H%M%S")}.csv")
+#test_cases_df.to_csv(f"test_cases {datetime.now().strftime("%m%d%Y-%H%M%S")}.csv")
