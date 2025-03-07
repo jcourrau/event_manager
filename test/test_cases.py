@@ -1,10 +1,6 @@
-from numpy.ma.core import concatenate
-from event_recurrance import *
-from sample_event_list import existing_events
-import pandas as pd
+from datetime import datetime
 
-print("\n")
-
+''' Test Cases'''
 test_cases = {
     # Test Case 1:
     "Adding a new weekly event on Mondays":
@@ -130,33 +126,47 @@ test_cases = {
 
 }
 
-# Generate the test data file for analysis.
-n = 1
-test_cases_df = pd.DataFrame()
-test_tittles_dic = {}
+if __name__ == "__main__":
+    ''' Generate Dates '''
+    n = 1
+    test_cases_df = pd.DataFrame()
+    test_tittles_dic = {}
+
+    # Test Results.
+    for tittle, new_event_data in test_cases.items():
+
+        # Summary
+        print(f"Test Case {n}: {tittle}")
+        scenario = count_weekly_events(new_event_data, existing_events)
+        print(summary_weekly_events(scenario),"\n")
+
+        # Add test data to dataframe
+        temp_df = pd.DataFrame(list(scenario.items()), columns=["Date", "Value"])
+        temp_df["Test Number"] = n
+        test_cases_df = pd.concat([test_cases_df, temp_df], ignore_index=True)
+
+        # Test tittle data
+        #test_tittles_dic[n] = tittle
+
+        n += 1
 
 
-for tittle, new_event_data in test_cases.items():
+    #test_tittles_df = pd.DataFrame(list(test_tittles_dic.items()), columns=['Test case', 'Test Number'])
 
-    # Summary
-    print(f"Test Case {n}: {tittle}")
-    scenario = count_weekly_events(new_event_data, existing_events)
-    print(summary_weekly_events(scenario),"\n")
+    ''' Export Test Cases Data '''
+    # Convert to DataFrame
+    df = pd.DataFrame.from_dict(test_cases, orient='index')
 
-    # Add test data to dataframe
-    temp_df = pd.DataFrame(list(scenario.items()), columns=["Date", "Value"])
-    temp_df["Test Number"] = n
-    test_cases_df = pd.concat([test_cases_df, temp_df], ignore_index=True)
+    # Reset index to include case names and add case numbers
+    df.reset_index(inplace=True)
+    df.rename(columns={'index': 'case_description'}, inplace=True)
+    df.insert(0, 'case_number', range(1, len(df) + 1))
 
-    # Test tittle data
-    test_tittles_dic[tittle] = n
+    # Export data
+    print(test_cases_df.head(5))
+    #print(test_tittles_df.head(5))
+    print(df.head(5))
+    #test_cases_df.to_csv(f"test_cases {datetime.now().strftime("%m%d%Y-%H%M%S")}.csv")
+    #test_cases_df.to_csv(f"test_cases {datetime.now().strftime("%m%d%Y-%H%M%S")}.csv")
 
-    n += 1
 
-test_tittles_df = pd.DataFrame(list(data.items()), columns=['Test case', 'Test Number'])
-
-# Export data
-print(test_cases_df.head(5))
-print(test_tittles_dic)
-#test_cases_df.to_csv(f"test_cases {datetime.now().strftime("%m%d%Y-%H%M%S")}.csv")
-#test_cases_df.to_csv(f"test_cases {datetime.now().strftime("%m%d%Y-%H%M%S")}.csv")
