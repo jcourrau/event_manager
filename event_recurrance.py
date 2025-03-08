@@ -1,14 +1,17 @@
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict
+import calendar
 
 class Event:
     def __init__(
         self, name: str, start_date: datetime, end_date: Optional[datetime] = None,
         recurrent_type: str = "n-weekly", interval: int = 1,
-        days_of_week: Optional[List[int]] = None, days_of_month: Optional[List[int]] = None
+        days_of_week: Optional[List[int]] = None, days_of_month: Optional[List[int]] = None,
+        use_last_day: Optional[bool] = False,
     ):
         """
         Base Event class for handling recurring events.
+        :type days_of_month: object
         :param name: Event name
         :param start_date: The first occurrence of the event
         :param end_date: The last occurrence of the event (optional, defaults to no end)
@@ -16,9 +19,16 @@ class Event:
         :param interval: Recurrence interval (1-12 weeks max for weekly events)
         :param days_of_week: List of weekdays the event occurs (0=Monday, 6=Sunday)
         :param days_of_month: List of month days the event occurs (1-31)
+        :param use_last_day: Whether to use last day of the month. (optional, defaults to False)
         """
         if recurrent_type == "n-weekly" and (interval < 1 or interval > 12):
             raise ValueError("Interval must be between 1 and 12 weeks.")
+
+        if days_of_week and max(days_of_week) > 7:
+            raise ValueError("The maximum day of the week must be 7.")
+
+        if days_of_month and max(days_of_month) > 31:
+            raise ValueError("The maximum day of the month must be 31.")
 
         self.name = name
         self.start_date = start_date
@@ -27,9 +37,11 @@ class Event:
         self.interval = interval
         self.days_of_week = days_of_week or []
         self.days_of_month = days_of_month or []
+        self.use_last_day = use_last_day
 
     def occurs_on(self, date: datetime) -> bool:
         """Checks if the event occurs on the given date."""
+
         if self.start_date > date or (self.end_date and self.end_date < date):
             return False  # Outside valid date range
 
@@ -37,7 +49,15 @@ class Event:
             return date.weekday() in self.days_of_week and self._matches_weekly_interval(date)
 
         if self.recurrent_type == "monthly":
-            return date.day in self.days_of_month
+            last_day = calendar.monthrange(date.year, date.month)[1]  # Get last valid day of the month
+
+            # Adjust event days based on `use_last_day`
+            valid_days = [
+                day if day <= last_day else last_day
+                for day in self.days_of_month
+            ] if self.use_last_day else self.days_of_month
+
+            return date.day in valid_days
 
         return False
 
