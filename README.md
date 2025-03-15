@@ -26,7 +26,7 @@ pip install -r requirements.txt
 ### Importing the Module
 
 ```python
-from event_recurrance import Event, count_weekly_events, format_weekly_events, summary_weekly_events
+from event_class import Event, count_weekly_events, format_weekly_events, summary_weekly_events
 ```
 
 ### Creating an Event
