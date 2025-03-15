@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 ''' Test Cases'''
 test_cases = {
     # Test Case 1:
@@ -127,6 +128,10 @@ test_cases = {
 }
 
 if __name__ == "__main__":
+    import pandas as pd
+    from event_recurrance import count_weekly_events, summary_weekly_events
+    from test.sample_event_list import existing_events
+
     ''' Generate Dates '''
     n = 1
     test_cases_df = pd.DataFrame()
