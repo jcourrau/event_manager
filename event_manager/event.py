@@ -1,13 +1,21 @@
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, TypedDict
 import calendar
 import logging
 import pandas as pd
 
+class EventDict(TypedDict):
+    name: str
+    start_date: datetime
+    end_date: Optional[datetime]
+    recurrent_type: str
+    interval: int
+    days: List[int]
+
 class Event:
     def __init__(
         self, name: str, start_date: datetime, end_date: Optional[datetime] = None,
-        recurrent_type: str = "n-weekly", interval: int = 1,
+        recurrent_type: str = "weekly", interval: int = 1,
         days: Optional[List[int]] = None, use_last_day: Optional[bool] = False
     ):
         """
@@ -16,21 +24,21 @@ class Event:
         :param name: Event name
         :param start_date: The first occurrence of the event
         :param end_date: The last occurrence of the event (optional, defaults to no end)
-        :param recurrent_type: "n-weekly" or "monthly" defines if days are calculated for week or month
+        :param recurrent_type: "weekly" or "monthly" defines if days are calculated for week or month
         :param interval: Recurrence interval (1-12 weeks max for weekly events)
         :param days: List of weekdays or month days the event occurs (0=Monday, 6=Sunday or 1st and 15th)
         :param use_last_day: Whether to use last day of the month. (optional, defaults to False)
         """
-        if recurrent_type not in ["n-weekly", "monthly"]:
-            raise ValueError("Recurrent type must be 'n-weekly' or 'monthly'")
+        if recurrent_type not in ["weekly", "monthly"]:
+            raise ValueError("Recurrent type must be 'weekly' or 'monthly'")
 
-        if recurrent_type == "n-weekly":
+        if recurrent_type == "weekly":
             if interval < 1 or interval > 12:
                 raise ValueError("Interval must be between 1 and 12 weeks.")
         elif interval != 1:
             raise ValueError(f"Interval can't be greater than 1 month.")
 
-        if recurrent_type == "n-weekly" and days and max(days) > 7:
+        if recurrent_type == "weekly" and days and max(days) > 7:
             raise ValueError("The maximum days of the week must be 7.")
 
         if recurrent_type == "monthly" and days and max(days) > 31:
@@ -66,7 +74,7 @@ class Event:
         if self.start_date > date or (self.end_date and self.end_date < date):
             return False  # Outside valid date range
 
-        if self.recurrent_type == "n-weekly":
+        if self.recurrent_type == "weekly":
             return date.weekday() in self.days and self._matches_weekly_interval(date)
 
         if self.recurrent_type == "monthly":
@@ -87,7 +95,8 @@ class Event:
         return False
 
     def _matches_weekly_interval(self, date: datetime) -> bool:
-        """Checks if the date falls within the correct n-weekly interval."""
+        """Checks if the date falls within the correct weekly
+ interval."""
         logging.debug(f"=> Getting match for weekly interval on {date.strftime('%Y-%m-%d')} ({date.weekday()})")
 
         delta_days = (date - self.start_date).days

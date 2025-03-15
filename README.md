@@ -1,21 +1,20 @@
-# Event Manager - Documentation
+# Event Manager
 
 ## Overview
 
-Event Manager is a Python-based module designed to handle recurring events efficiently. It allows users to create, track, and manage events with different recurrence rules such as **weekly**, **bi-weekly**, and **monthly**. The system provides functionality to count and summarize events occurring within a time frame, making it useful for controlling the amount of events created for optimization and scheduling tools.
+The event Manager is a Python module designed to handle recurring events efficiently. It provides a robust system for managing events with **weekly** and **monthly** recurrence, allowing users to track and count events over time. This is particularly useful for financial tracking, scheduling, and automation tools.
 
 ## Features
 
-- **Recurring Events:** Supports **n-weekly** and **monthly** recurrence.
-- **Event Counting:** Retrieves the number of events occurring in a given period.
-- **ORM-Friendly Design:** Can be integrated with databases.
-- **Optimized Performance:** Uses batch queries to improve efficiency.
-- **Flexible Filtering:** Retrieve events by date ranges and recurrence rules.
-- **Comprehensive Testing:** Includes various test cases to validate the system.
+- **Recurring Events:** Supports `weekly` and `monthly` recurrence patterns.
+- **Date Range Filtering:** Retrieve events occurring in a specific period.
+- **Event Counting:** Count occurrences of events within a time frame.
+- **Efficient Performance:** Optimized for handling large datasets.
+- **Comprehensive Testing:** Includes unit tests to validate calculations.
 
 ## Installation
 
-Install dependencies from the `requirements.txt` file:
+Clone this repository and install the dependencies:
 
 ```sh
 pip install -r requirements.txt
@@ -26,110 +25,118 @@ pip install -r requirements.txt
 ### Importing the Module
 
 ```python
-from event_class import Event, count_weekly_events, format_weekly_events, summary_weekly_events
+from event_manager import Event
 ```
 
 ### Creating an Event
+Weekly event:
+```python
+from datetime import datetime
+
+# Create a recurring event
+event = Event(
+    name=" Workout",
+    start_date=datetime(2024, 3, 5),
+    recurrent_type="weekly",
+    days=[2,4]  # Occurs every Wednesday and Friday
+)
+```
+Bi-Weekly event:
+```python
+from datetime import datetime
+
+# Create a recurring event
+event = Event(
+    name="Basketball practice",
+    start_date=datetime(2024, 3, 5),
+    recurrent_type="weekly",
+    interval = 2, # Every two weeks
+    days=[1]  # On Tuesdays
+)
+```
+Monthly event:
+```python
+from datetime import datetime
+
+# Create a recurring event
+event = Event(
+    name="Monthly Payment",
+    start_date=datetime(2024, 3, 5),
+    recurrent_type="monthly",
+    days=[5]  # Occurs on the 5th of every month
+)
+```
+
+### Retrieving Events in a Date Range
 
 ```python
 from datetime import datetime
 
-event = Event(
-    name="Gym Membership Payment",
-    start_date=datetime(2024, 3, 5),
-    recurrent_type="monthly",
-    days_of_month=[5]
-)
+events = [
+    Event("Rent Payment", datetime(2024, 3, 1), recurrent_type="monthly", days=[1]),
+    Event("Salary", datetime(2024, 3, 1), recurrent_type="monthly", days=[1, 15]),
+]
+
+filtered_events = get_events_in_range(events, datetime(2024, 3, 1), datetime(2024, 6, 1))
+print(filtered_events)
 ```
 
 ### Counting Weekly Events
-
+Before creating an event, you can check how many events have been creating for 48 relevant weeks by default. 
+You can change this by editing the parameter `week_limit=48`
 ```python
 new_event_data = {
-    "name": "Test Event",
+    "name": "Team Meeting",
     "start_date": datetime(2024, 3, 1),
     "recurrent_type": "n-weekly",
     "interval": 2,
-    "days_of_week": [0, 4]  # Mondays and Thursdays
+    "days": [0, 4]  # Mondays and Thursdays
 }
 
-weekly_counts = count_weekly_events(new_event_data, [event])
-format_weekly_events(weekly_counts)
-print(summary_weekly_events(weekly_counts))
+weekly_counts = count_weekly_events(new_event_data, events, week_limit=48)
+print(weekly_counts)
 ```
 
-## Functions & Methods
+## Class & Function Reference
 
 ### `Event` Class
 
-| Method                                                                                        | Description                                                      |
-| --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `__init__(name, start_date, end_date, recurrent_type, interval, days_of_week, days_of_month)` | Initializes an event with recurrence rules.                      |
-| `occurs_on(date)`                                                                             | Checks if an event occurs on a given date.                       |
-| `_matches_weekly_interval(date)`                                                              | Validates if an event follows the correct **n-weekly** interval. |
-| `__str__()`                                                                                   | Returns a string representation of the event.                    |
+| Method                          | Description                                                  |
+|----------------------------------|--------------------------------------------------------------|
+| `__init__(...)`                  | Initializes an event with recurrence rules.                 |
+| `occurs_on(date)`                | Checks if an event occurs on a given date.                  |
+| `get_occurrences(start, end)`     | Retrieves all occurrences within a date range.              |
+| `occurs_on_range(start, end)`     | Checks if an event may occur in a given range.              |
+| `__str__()`                       | Returns a string representation of the event.               |
 
-### Core Functions
+### Utility Functions
 
-| Function                                                    | Description                                                          |
-| ----------------------------------------------------------- | -------------------------------------------------------------------- |
-| `get_events_in_range(start_date, end_date, event_queryset)` | Retrieves events occurring within a given date range.                |
-| `count_events(start_date, end_date, event_queryset)`        | Counts events in a specific time period.                             |
-| `week_range(target_date)`                                   | Returns the Monday and Sunday of a given week.                       |
-| `get_event_weeks(event_data, week_limit=42)`                | Retrieves all Mondays of weeks where an event occurs.                |
-| `count_weekly_events(new_event_data, event_queryset)`       | Consults the  number of events per week beforewh adding a new event. |
-| `format_weekly_events(weekly_event_counts)`                 | Prints weekly event counts in a human-readable format.               |
-| `summary_weekly_events(weekly_event_counts)`                | Returns a summary of total and average weekly events.                |
+| Function                                    | Description                                                                    |
+|---------------------------------------------|--------------------------------------------------------------------------------|
+| `get_event_weeks(event, week_limit=48)`     | Retrieves weeks where an event occurs.                                         |
+| `get_events_in_range(events, start, end)`   | Filters events occurring within a given date range.                            |
+| `count_weekly_events(event, events)`        | Counts the existing events on the relevant weeks a new event might be created. |
 
-## Sample Event List
+## Running Tests
 
-`sample_event_list.py` contains predefined recurring events:
-
-```python
-existing_events = [
-    Event("Rent Payment", datetime(2024, 3, 1), recurrent_type="monthly", days_of_month=[1]),
-    Event("Gym Membership", datetime(2024, 3, 5), recurrent_type="monthly", days_of_month=[5]),
-    Event("Salary", datetime(2024, 3, 1), recurrent_type="monthly", days_of_month=[1, 15]),
-]
-```
-
-## Running Test Cases
-
-Run `test_cases.py` to validate event calculations:
+Run unit tests using `unittest`:
 
 ```sh
-python test_cases.py
-```
-
-### Example Test Case
-
-```python
-new_event_data = {
-    "name": "Weekly Sync",
-    "start_date": datetime(2024, 3, 4),
-    "recurrent_type": "n-weekly",
-    "interval": 1,
-    "days_of_week": [0]
-}
-print("Test Case: Weekly Sync on Mondays")
-print(summary_weekly_events(count_weekly_events(new_event_data, existing_events)))
+python -m unittest discover tests
 ```
 
 ## Dependencies
 
-The project requires the following dependencies:
+Ensure you have the required dependencies installed:
 
 ```
-- dateutils==0.6.12
-- numpy==2.2.3
-- openpyxl==3.1.5
-- pandas==2.2.3
-- python-dateutil==2.9.0.post0
-- pytz==2025.1
-- six==1.17.0
-- tzdata==2025.1
+- pandas
+- python-dateutil
+- pytz
 ```
 
 ## Conclusion
 
-This module is a flexible solution for handling recurring events, particularly useful for **financial tracking, scheduling, and calendar applications**. The provided test cases ensure reliability, while its **modular design** allows easy expansion.
+Scheduler is a flexible and efficient module for handling recurring events. It is designed for applications in **finance tracking, scheduling, and automation**. The built-in tests ensure the accuracy and reliability of event calculations.
+
+For further improvements or contributions, feel free to submit a pull request!

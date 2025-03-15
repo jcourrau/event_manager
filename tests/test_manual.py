@@ -1,6 +1,4 @@
-import logging
-
-from functions import *
+from event_manager.utils import *
 
 # Configure logging
 logging.basicConfig(
@@ -20,24 +18,24 @@ existing_events = [
                       Event("Netflix Subscription", datetime(2024, 3, 20), recurrent_type="monthly",
                             days=[20]),
                       Event("Coffee Subscription", datetime(2024, 3, 7), recurrent_type="monthly", days=[7]),
-                      Event("Freelance Work", datetime(2026, 3, 3), recurrent_type="n-weekly", interval=2,
+                      Event("Freelance Work", datetime(2026, 3, 3), recurrent_type="weekly", interval=2,
                             days=[2]),
                       Event("Spotify Subscription", datetime(2024, 3, 25), recurrent_type="monthly",
                             days=[25]),
-                      Event("Groceries", datetime(2024, 3, 3), recurrent_type="n-weekly", interval=1,
+                      Event("Groceries", datetime(2024, 3, 3), recurrent_type="weekly", interval=1,
                             days=[6]),
                       Event("Insurance Payment", datetime(2024, 3, 12), recurrent_type="monthly", days=[12]),
                       Event("Credit Card Payment", datetime(2024, 3, 22), recurrent_type="monthly",
                             days=[22]),
-                      Event("Savings Deposit", datetime(2025, 3, 8), recurrent_type="n-weekly", interval=2,
+                      Event("Savings Deposit", datetime(2025, 3, 8), recurrent_type="weekly", interval=2,
                             days=[4]),
-                      Event("Dining Out", datetime(2025, 3, 5), recurrent_type="n-weekly", interval=1,
+                      Event("Dining Out", datetime(2025, 3, 5), recurrent_type="weekly", interval=1,
                             days=[1, 5]),
                       Event("One-time Purchase", datetime(2024, 4, 12), datetime(2024, 4, 12)),
                   ] + [
-                      Event(f"Expense {i}", datetime(2024, 3, i % 28 + 1), recurrent_type="n-weekly",
+                      Event(f"Expense {i}", datetime(2024, 3, i % 28 + 1), recurrent_type="weekly",
                             interval=i % 4 + 1, days=[i % 7])
-                      for i in range(17, 500)
+                      for i in range(17, 50)
                   ]
 
 # TEST CASE
@@ -48,9 +46,9 @@ if __name__ == "__main__":
         "name": "Monday Sync",
         "start_date": datetime(2025, 3, 4),  # March 4, 2025 (Tuesday)
         "end_date": datetime(2025, 6, 1),
-        "recurrent_type": "n-weekly",
+        "recurrent_type": "weekly",
         "interval": 1,
-        "days": [1, 16]
+        "days": [1, 2]
     }
 
     # Relevant Weeks
@@ -79,14 +77,14 @@ if __name__ == "__main__":
 
     weekly_count = count_weekly_events(test_case_1, existing_events)
     weekly_count_df = pd.DataFrame(list(weekly_count.items()), columns=["week", "count"])
-    #print(weekly_count_df)
+    print(weekly_count_df)
 
 
     # Occurrences
     for event in existing_events:
         occurrences_df = pd.DataFrame(event.get_occurrences(datetime(2024, 3, 1),datetime(2027, 3, 1)), columns=["occurrence"])
         occurrences_df['time_delta'] = occurrences_df['occurrence'].diff()
-        aprox_mean = int((event.interval * (7 if event.recurrent_type == "n-weekly" else 30)) / len(event.days))
+        aprox_mean = int((event.interval * (7 if event.recurrent_type == "weekly" else 30)) / len(event.days))
 
         if occurrences_df.empty:
             print(f"\n {event.name} | {event.recurrent_type} | Interval: {event.interval} | days: {event.days}")

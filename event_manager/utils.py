@@ -1,42 +1,56 @@
 from datetime import datetime, timedelta
 import pandas as pd
-from event_class import Event
-from typing import List
+from .event import Event, EventDict
+from typing import List, Union
 import logging
 
 # event parameters | dic , week_limit | 48 int =>  week_start_date(week_limit) | list
-def get_event_weeks(event, week_limit=48):
+def get_event_weeks(event: Union[Event, EventDict], week_limit=48):
     """
-    Determines event recurrence and returns a list of weeks dates (Mondays) when the event occurs.
-    """
+    Determines event recurrence and returns a list of weeks (Mondays) when the event occurs.
+    Supports both Event objects and dictionary-based event representations.
 
-    start_date = event["start_date"]
-    end_date = event.get("end_date", start_date + timedelta(weeks=week_limit * event["interval"]))
-    interval = event["interval"]
-    recurrent_type = event["recurrent_type"]
+    :param event: An Event instance or a dictionary containing event data.
+    :param week_limit: Number of weeks to retrieve.
+    :return: List of week start dates.
+    """
+    if isinstance(event, dict):
+        event = Event(
+            name=event["name"],
+            start_date=event["start_date"],
+            end_date=event.get("end_date"),
+            recurrent_type=event["recurrent_type"],
+            interval=event["interval"],
+            days=event["days"]
+        )
+
+    start_date = event.start_date
+    end_date = event.end_date or (start_date + timedelta(weeks=week_limit * event.interval))
+    interval = event.interval
+    recurrent_type = event.recurrent_type
 
     if (end_date - start_date).days > 1825:
         raise ValueError("Can't get weeks for more than 5 years")
 
-    if recurrent_type == "n-weekly":
+    if recurrent_type == "weekly":
         if interval < 1 or interval > 12:
             raise ValueError("Interval must be between 1 and 12 weeks.")
     elif interval != 1:
         raise ValueError(f"Interval can't be greater than 1 month.")
 
 
-    if recurrent_type == "n-weekly":
+    if recurrent_type == "weekly":
         start_date = start_date - timedelta(days=start_date.weekday())  # Ensure start_date aligns to Monday
         date_range = pd.date_range(start=start_date, end=end_date, freq=f'{interval * 7}D')
         relevant_weeks_df = pd.DataFrame(date_range, columns=['week_start_date'])
 
 
     elif recurrent_type == "monthly":
-        days = event["days"]
+        days = event.days
         date_range = pd.date_range(start=start_date, end=end_date)
         relevant_dates = {date for date in date_range if date.day in days}
 
-        # Intervals
+        # Apply interval filtering
         relevant_months = []
         last_added_month = None
         for date in sorted(relevant_dates):
