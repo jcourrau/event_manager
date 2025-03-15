@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict
 import calendar
 import logging
+import pandas as pd
 
 class Event:
     def __init__(
@@ -38,13 +39,26 @@ class Event:
         if end_date and end_date < start_date:
             raise ValueError("End date must be before start date.")
 
+        if days is None:
+            self.days = [start_date.weekday()]
+        else:
+            self.days = days or []
+
         self.name = name
         self.start_date = start_date
         self.end_date = end_date
         self.recurrent_type = recurrent_type
         self.interval = interval
-        self.days = days or []
         self.use_last_day = use_last_day
+
+
+
+    def get_occurrences(self, start_date: datetime, end_date: datetime):
+        if not self.occurs_on_range(start_date, end_date):
+            logging.debug(f"Event {self.name} does not occur on the given date range")
+            return []  # Returning an empty list is more predictable than None
+
+        return [date for date in pd.date_range(start=start_date, end=end_date) if self.occurs_on(date)]
 
     def occurs_on(self, date: datetime) -> bool:
         """Checks if the event occurs on the given date."""
@@ -109,7 +123,3 @@ class Event:
             f"end_date={'None' if not self.end_date else self.end_date.strftime('%Y-%m-%d')}, "
             f"days={self.days})"
         )
-
-
-'''----< Main Functions >----'''
-
