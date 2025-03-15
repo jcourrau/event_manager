@@ -37,7 +37,7 @@ existing_events = [
                   ] + [
                       Event(f"Expense {i}", datetime(2024, 3, i % 28 + 1), recurrent_type="n-weekly",
                             interval=i % 4 + 1, days=[i % 7])
-                      for i in range(17, 50)
+                      for i in range(17, 500)
                   ]
 
 # TEST CASE
@@ -75,16 +75,29 @@ if __name__ == "__main__":
         end_date = event.end_date.strftime('%Y-%m-%d') if event.end_date else None
         #print(f"{i+1:02d} | {event.start_date.strftime('%Y-%m-%d')} - {end_date} | Event: {event.name}")
 
-    # Occurs on
-    print(f"\n Occurs on {test_case_1["start_date"].strftime('%Y-%b-%a-%d')}")
-    for event in existing_events:
-        occurs = event.occurs_on(test_case_1["start_date"])
-        if occurs:
-         print(f"{occurs} | {event.name} | {event.recurrent_type} | {event.days}")
-
     # For each relevant week, calculate the relevant events (again) and count how many occur
 
     weekly_count = count_weekly_events(test_case_1, existing_events)
-    print(weekly_count)
+    weekly_count_df = pd.DataFrame(list(weekly_count.items()), columns=["week", "count"])
+    #print(weekly_count_df)
+
+
+    # Occurrences
+    for event in existing_events:
+        occurrences_df = pd.DataFrame(event.get_occurrences(datetime(2024, 3, 1),datetime(2027, 3, 1)), columns=["occurrence"])
+        occurrences_df['time_delta'] = occurrences_df['occurrence'].diff()
+        aprox_mean = int((event.interval * (7 if event.recurrent_type == "n-weekly" else 30)) / len(event.days))
+
+        if occurrences_df.empty:
+            print(f"\n {event.name} | {event.recurrent_type} | Interval: {event.interval} | days: {event.days}")
+            print("No occurrences found")
+
+        # Exceptions
+        elif occurrences_df["time_delta"].std().days > 0 or aprox_mean != occurrences_df["time_delta"].mean().days:
+            print(f"\n {event.name} | {event.recurrent_type} | Interval: {event.interval} | days: {event.days} | Aprox. Mean {aprox_mean} ")
+            print(f" Occurrences: {len(occurrences_df)}")
+            print(f" Mean: {occurrences_df["time_delta"].mean().days}")
+            print(f" Median: {occurrences_df["time_delta"].median().days}")
+            print(f" Std: {occurrences_df["time_delta"].std().days}")
 
 
