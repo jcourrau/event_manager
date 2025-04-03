@@ -3,7 +3,9 @@ import logging
 from datetime import datetime
 from typing import List, Optional, TypedDict
 import pandas as pd
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
 
 Base = declarative_base()
 
@@ -16,51 +18,76 @@ class EventDict(TypedDict):
     days: List[int]
 
 class Event(Base):
+    __tablename__ = "events"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255))
+    start_date = Column(DateTime)
+    end_date = Column(DateTime, nullable=True)
+    recurrent_type = Column(String(20))  # 'weekly' or 'monthly'
+    interval = Column(Integer, default=1)
+    days = Column(JSON, default=list)
+    event_type = Column(String(50))  # Defines whether it's an 'event' or 'transaction'
+
+    __mapper_args__ = {
+        "polymorphic_identity": "event",
+        "polymorphic_on": event_type
+    }
+
     def __init__(
-        self, name: str, start_date: datetime, end_date: Optional[datetime] = None,
-        recurrent_type: str = "weekly", interval: int = 1,
-        days: Optional[List[int]] = None, use_last_day: Optional[bool] = False
+        self, *,
+        name: str,
+        start_date: datetime,
+        end_date: Optional[datetime] = None,
+        recurrent_type: str = "weekly",
+        interval: int = 1,
+        days: Optional[List[int]] = None,
+        use_last_day: Optional[bool] = False,
+        subclass: str = "event"
     ):
         """
-        Base Event class for handling recurring events.
-        :type days: object
-        :param name: Event name
-        :param start_date: The first occurrence of the event
-        :param end_date: The last occurrence of the event (optional, defaults to no end)
-        :param recurrent_type: "weekly" or "monthly" defines if days are calculated for week or month
-        :param interval: Recurrence interval (1-12 weeks max for weekly events)
-        :param days: List of weekdays or month days the event occurs (0=Monday, 6=Sunday or 1st and 15th)
-        :param use_last_day: Whether to use last day of the month. (optional, defaults to False)
+        Initializes an Event instance or one of its subclasses.
+
+        :param name: Name of the event.
+        :param start_date: The first date the event occurs.
+        :param end_date: Optional end date. If not provided, the event continues indefinitely.
+        :param recurrent_type: Either "weekly" or "monthly". Determines how recurrence is calculated.
+        :param interval: Interval of recurrence. For example, every 2 weeks or every 3 months.
+        :param days: A list of days the event occurs.
+                      - For weekly events: integers 0–6 (0 = Monday, 6 = Sunday).
+                      - For monthly events: integers 1–31 representing days of the month.
+        :param use_last_day: If True, the event will also occur on the last day of the month (when applicable).
+        :param subclass: Internal use for subclass identity in polymorphic inheritance (e.g., "transaction").
         """
+
+        # Initial Exceptions.
         if recurrent_type not in ["weekly", "monthly"]:
             raise ValueError("Recurrent type must be 'weekly' or 'monthly'")
 
         if recurrent_type == "weekly":
-            if interval < 1 or interval > 12:
+            if not 1 <= interval <= 12:
                 raise ValueError("Interval must be between 1 and 12 weeks.")
-        elif interval != 1:
-            raise ValueError(f"Interval can't be greater than 1 month.")
+            if days and not all(0 <= day <= 6 for day in days):
+                raise ValueError("Days for weekly events must be between 0 (Mon) and 6 (Sun).")
 
-        if recurrent_type == "weekly" and days and max(days) > 7:
-            raise ValueError("The maximum days of the week must be 7.")
-
-        if recurrent_type == "monthly" and days and max(days) > 31:
-            raise ValueError("The maximum days of the month must be 31.")
+        elif recurrent_type == "monthly":
+            if interval != 1:
+                raise ValueError("Monthly events can only recur every 1 month.")
+            if days and not all(1 <= day <= 31 for day in days):
+                raise ValueError("Days for monthly events must be between 1 and 31.")
 
         if end_date and end_date < start_date:
-            raise ValueError("End date must be before start date.")
+            raise ValueError("End date must be after start date.")
 
-        if days is None:
-            self.days = [start_date.weekday()]
-        else:
-            self.days = days or []
-
+        # Initial Values
         self.name = name
         self.start_date = start_date
         self.end_date = end_date
         self.recurrent_type = recurrent_type
         self.interval = interval
+        self.days = days if days is not None else [start_date.weekday()]
         self.use_last_day = use_last_day
+        self.event_type = subclass
 
 
     def get_occurrences(self, start_date: datetime, end_date: datetime):
@@ -98,7 +125,7 @@ class Event(Base):
 
     def _matches_weekly_interval(self, date: datetime) -> bool:
         """Checks if the date falls within the correct weekly
- interval."""
+        interval."""
         logging.debug(f"=> Getting match for weekly interval on {date.strftime('%Y-%m-%d')} ({date.weekday()})")
 
         delta_days = (date - self.start_date).days
