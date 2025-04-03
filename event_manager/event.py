@@ -1,8 +1,11 @@
-from datetime import datetime, timedelta
-from typing import List, Optional, Dict, TypedDict
 import calendar
 import logging
+from datetime import datetime
+from typing import List, Optional, TypedDict
 import pandas as pd
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 class EventDict(TypedDict):
     name: str
@@ -12,7 +15,7 @@ class EventDict(TypedDict):
     interval: int
     days: List[int]
 
-class Event:
+class Event(Base):
     def __init__(
         self, name: str, start_date: datetime, end_date: Optional[datetime] = None,
         recurrent_type: str = "weekly", interval: int = 1,
@@ -58,7 +61,6 @@ class Event:
         self.recurrent_type = recurrent_type
         self.interval = interval
         self.use_last_day = use_last_day
-
 
 
     def get_occurrences(self, start_date: datetime, end_date: datetime):
