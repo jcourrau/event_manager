@@ -9,9 +9,11 @@ setup(
         "pandas",
         "python-dateutil",
         "pytz",
-        "tzdata"
+        "tzdata",
+        "SqlAlchemy",
     ],
     description="A module for managing recurring events.",
-    author="Your Name",
+    author="Jason Courrau",
+    author_email="jasoncourrau@gmail.com",
     license="MIT"
 )
