@@ -1,8 +1,8 @@
 
 from datetime import datetime
-from event_manager.db_session import session_scope
-from event_manager.event import Base
-from event_manager.event_extensions import Transaction
+from db_session import session_scope
+from event import Base
+from event_extensions import Transaction
 from sqlalchemy import create_engine
 
 engine = create_engine("sqlite:///events.db")
