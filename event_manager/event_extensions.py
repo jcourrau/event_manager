@@ -1,4 +1,8 @@
-from sqlalchemy import Column, Float, Integer, String
+from sqlalchemy import Column, Float, String
+from datetime import datetime
+from typing import List
+from sqlalchemy import or_
+from db_session import session_scope
 from event import Event
 
 # Example of extension
@@ -58,3 +62,42 @@ class Transaction(Event):
 
     def __str__(self):
         return f"{self.transaction_type.capitalize()} - {self.name}: ${self.amount}"
+
+
+
+def get_user_transactions(user_id: str, start: datetime, end: datetime) -> List[Transaction]:
+    """
+    Returns user transactions whose active date ranges overlap with the provided period.
+    """
+    with session_scope() as session:
+        txs = session.query(Transaction).filter(
+            Transaction.user_id == user_id,
+            Transaction.start_date <= end,
+            or_(
+                Transaction.end_date == None,
+                Transaction.end_date >= start
+            )
+        ).all()
+
+        # Create independent copies of transactions with the original ID
+        detached = []
+        for tx in txs:
+            new_tx = Transaction(
+                name=tx.name,
+                start_date=tx.start_date,
+                end_date=tx.end_date,
+                recurrent_type=tx.recurrent_type,
+                interval=tx.interval,
+                days=tx.days,
+                use_last_day=tx.use_last_day,
+                transaction_type=tx.transaction_type,
+                amount=tx.amount,
+                user_id=tx.user_id
+            )
+            new_tx.id = tx.id  # Preserve original database ID
+            detached.append(new_tx)
+
+        print("Preloaded: ", [(tx.name, tx.start_date) for tx in txs])
+
+        return detached
+

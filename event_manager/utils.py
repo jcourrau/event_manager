@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import pandas as pd
-from .event import Event, EventDict
-from typing import List, Union
+from event import Event, EventDict
+from typing import List, Union, Dict
 import logging
 
 # event parameters | dic , week_limit | 48 int =>  week_start_date(week_limit) | list
@@ -135,7 +135,7 @@ def get_events_in_range(event_list: List[Event], start_date: datetime, end_date:
 
     return events
 
-def count_weekly_events(event_param,existing_events):
+def count_weekly_events(event_param,existing_events: List[Event]) -> Dict:
     start_date = event_param["start_date"]
     end_date = event_param.get("end_date", None)
 
@@ -159,6 +159,35 @@ def count_weekly_events(event_param,existing_events):
         weekly_count[week_date] = week_count
 
     return weekly_count
+
+# This is the main function to retrieve event occurrences
+def get_occurrence_df(events: List[Event], start: datetime, end: datetime) -> pd.DataFrame:
+    """
+   Given a list of events or transactions, returns a DataFrame where each row
+    represents a single occurrence of an event within the given date range.
+
+    Columns:
+    - event_id
+    - name
+    - date
+    - amount (if present)
+    - transaction_type (if present)
+    - user_id (if present)
+    """
+    rows = []
+
+    for e in events:
+        for date in e.get_occurrences(start, end):
+            rows.append({
+                "event_id": getattr(e, "id", None),
+                "name": getattr(e, "name", ""),
+                "date": date,
+                "amount": getattr(e, "amount", None),
+                "transaction_type": getattr(e, "transaction_type", None),
+                "user_id": getattr(e, "user_id", None)
+            })
+
+    return pd.DataFrame(rows)
 
 
 

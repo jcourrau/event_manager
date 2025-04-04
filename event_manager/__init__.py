@@ -1,7 +1,33 @@
 """
-Scheduler module for handling recurring events.
+Event Manager module for handling recurring events and transactions.
 """
-from .event import Event
-from .utils import get_event_weeks, get_events_in_range, count_weekly_events
 
-__all__ = ["Event", "get_event_weeks", "get_events_in_range", "count_weekly_events"]
+# Base class
+from event import Event
+
+# Extensions
+from event_extensions import (
+    Transaction,
+    get_user_transactions
+)
+
+# CRUD
+from event_crud import (
+    create_event,
+    update_event,
+    delete_event,
+    get_event_by_id
+)
+
+# Utility functions
+from .utils import get_occurrence_df
+
+__all__ = [
+    "Event",
+    "Transaction",
+    "get_user_transactions",
+    "create_event",
+    "get_event_by_id",
+    "update_event",
+    "delete_event"
+]

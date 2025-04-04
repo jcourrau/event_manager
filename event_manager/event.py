@@ -3,9 +3,8 @@ import logging
 from datetime import datetime
 from typing import List, Optional, TypedDict
 import pandas as pd
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Float, ForeignKey
+from sqlalchemy import  Column, Integer, String, DateTime, JSON, Boolean
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
 
 Base = declarative_base()
 
@@ -28,6 +27,7 @@ class Event(Base):
     interval = Column(Integer, default=1)
     days = Column(JSON, default=list)
     event_type = Column(String(50))  # Defines whether it's an 'event' or 'transaction'
+    use_last_day = Column(Boolean, default=False)
 
     __mapper_args__ = {
         "polymorphic_identity": "event",
